@@ -1,0 +1,38 @@
+{% extends 'base.html' %} {% load crispy_forms_tags %} {% block content %} {% if form.non_field_errors %}
+<div class="alert alert-danger alert-dismissible fade show" role="alert">
+    {% for error in form.non_field_errors %}
+    <p{% if forloop.last %} class="mb-0" {% endif %}>{{ error }}</p>
+        {% endfor %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+      </button>
+</div>
+{% endif %}
+<div class="wrapper fadeInDown">
+    <div id="formContent">
+
+        <!-- Login Form -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div>
+                <div class="form-group">
+                    {{ form.username|as_crispy_field }}
+                </div>
+            </div>
+            <div>
+                <div class="form-group">
+                    {{ form.password|as_crispy_field }}
+                </div>
+            </div>
+            <input type="submit" class="fadeIn fourth" value="Log In">
+        </form>
+
+
+        <!-- Remind Passowrd -->
+        <div id="formFooter">
+            <a class="underlineHover" href="#">Forgot Password?</a>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
