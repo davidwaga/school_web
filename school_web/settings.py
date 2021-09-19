@@ -39,9 +39,39 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'classroom',
-    'accounts',
     'crispy_forms',
     'rest_framework',
+     # allauth required
+    'django.contrib.sites',
+    
+    # custom apps
+    'students',
+    'teachers',
+    'result',
+    'academics',
+    'pages',
+    'articles',
+    'institute',
+
+    # third party apps
+    'crispy_forms',
+    'debug_toolbar',
+    'rolepermissions',
+    'taggit',
+    'django_extensions',
+    'django_filters',
+    'allauth',
+    'allauth.account',
+    'django_rename_app',
+    'allauth.socialaccount',
+    'ckeditor',
+    'ckeditor_uploader',
+    'mptt',
+    'widget_tweaks',
+    'django_social_share',
+    'django_countries',
+    'import_export',
+    'admin_honeypot',
     #Added new modules
 ]
 

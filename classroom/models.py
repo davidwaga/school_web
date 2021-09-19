@@ -217,3 +217,11 @@ class  ExamResult(models.Model):
 
     def __str__(self):
         return self.marks
+
+
+class Book(models.Model):
+    name = models.CharField(max_length=100)
+    is_verified = models.BooleanField(default=False,editable=True)
+
+    def __str__(self):
+        return self.name

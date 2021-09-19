@@ -1,128 +1,110 @@
-from classroom.forms import STATES
-from django import forms
-from django.contrib.auth.forms import UserCreationForm
-from django.db import transaction
-from django.forms.utils import ValidationError
-from classroom.models import (Student,Subject)
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Submit, Row, Column
-from django.forms import ModelForm
-from accounts.models import User
+
+from django import forms as djform
+from django.forms import inlineformset_factory
+from django.contrib.auth import get_user_model, forms
+from django.core.exceptions import ValidationError
+from django.utils.translation import gettext_lazy as _
+
+from .models import CommonUserProfile, SocialLink
+
+User = get_user_model()
 
 
-
-class TeacherSignUpForm(UserCreationForm):
-    name = forms.CharField(max_length=200)
-    class Meta(UserCreationForm.Meta):
+class UserChangeForm(forms.UserChangeForm):
+    class Meta(forms.UserChangeForm.Meta):
         model = User
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.is_teacher = True
-        if commit:
-            user.save()
-        return user
+        fields = ('requested_role', )
 
 
-class StudentSignUpForm(UserCreationForm):
-    interests = forms.ModelMultipleChoiceField(
-        queryset=Subject.objects.all(),
-        widget=forms.CheckboxSelectMultiple,
-        required=True
-    )
-
-    class Meta(UserCreationForm.Meta):
-        model = User
-
-    @transaction.atomic
-    def save(self):
-        user = super().save(commit=False)
-        user.is_student = True
-        user.save()
-        student = Student.objects.create(user=user)
-        student.interests.add(*self.cleaned_data.get('interests'))
-        return user
-
-
-class StudentInterestsForm(forms.ModelForm):
+class UserCreateFormDashboard(forms.UserCreationForm):
     class Meta:
-        model = Student
-        fields = ('interests', )
-        widgets = {
-            'interests': forms.CheckboxSelectMultiple
-        }
+        model = User
+        fields = fields = (
+            'username', 'email', 'password1', 'password2',
+            'requested_role', 'approval_status', 'is_staff')
 
-STATES = [
-    ('UK','UK')
-]
 
-class AddressForm(ModelForm):
-    helper = FormHelper()
-    email = forms.CharField(widget=forms.TextInput(
-        attrs={'placeholder': 'Email'}))
-    password = forms.CharField(widget=forms.PasswordInput())
-    address_1 = forms.CharField(
-        label='Address',
-        widget=forms.TextInput(attrs={'placeholder': '1234 Main St'})
-    )
-    address_2 = forms.CharField(
-        widget=forms.TextInput(
-            attrs={'placeholder': 'Apartment, studio, or floor'})
-    )
-    city = forms.CharField()
-    state = forms.ChoiceField(choices=STATES)
-    zip_code = forms.CharField(label='Zip')
-    check_me_out = forms.BooleanField(required=False)
+class UserChangeFormDashboard(forms.UserChangeForm):
+    password = None
 
+    class Meta(forms.UserChangeForm.Meta):
+        model = User
+        fields = (
+            'username', 'email',
+            'first_name', 'last_name',
+            'requested_role', 'approval_status',
+            'is_staff',
+        )
+
+
+class UserRegistrationForm(forms.UserCreationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.layout = Layout(
-            Row(
-                Column('email', css_class='form-group col-md-6 mb-0'),
-                Column('password', css_class='form-group col-md-6 mb-0'),
-                css_class='form-row'
-            ),
-            'address_1',
-            'address_2',
-            Row(
-                Column('city', css_class='form-group col-md-6 mb-0'),
-                Column('state', css_class='form-group col-md-4 mb-0'),
-                Column('zip_code', css_class='form-group col-md-2 mb-0'),
-                css_class='form-row'
-            ),
-            'check_me_out',
-            Submit('submit', 'Sign in')
+        self.helper = FormHelper(self)
+        self.helper.template_pack = 'tailwind'
+    error_message = forms.UserCreationForm.error_messages.update(
+        {
+            "duplicate_username": _(
+                "This username has already been taken."
+            )
+        }
+    )
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password1', 'password2')
+
+    def clean_username(self):
+        username = self.cleaned_data["username"]
+
+        try:
+            User.objects.get(username=username)
+        except User.DoesNotExist:
+            return username
+
+        raise ValidationError(
+            self.error_messages["duplicate_username"]
         )
-from django.contrib.auth import authenticate
 
-class LoginForm(forms.Form):
-    username =  forms.CharField(
-    widget=forms.TextInput(attrs={ 'placeholder':'Username',})
-) 
-    password = forms.CharField(strip=False,widget=forms.PasswordInput(attrs={
-        
-        'placeholder':'Password',
-    }))
+    def clean_password2(self):
+        cd = self.cleaned_data
+        if cd['password1'] != cd['password2']:
+            raise forms.ValidationError('Password didn\'t match!')
+        return cd['password2']
 
-    def clean(self, *args, **kwargs):
-        username = self.cleaned_data.get("username")
-        password = self.cleaned_data.get("password")
 
-        if username and password:
-            self.user = authenticate(username=username, password=password)
-            try:
-                user = User.objects.get(username=username)
-            except User.DoesNotExist:
-                raise forms.ValidationError("User Does Not Exist.")
+class ProfileCompleteForm(djform.ModelForm):
+    class Meta:
+        model = User
+        fields = [
+            'employee_or_student_id',
+            'requested_role',
+            'email',
+            'approval_extra_note']
 
-            if not user.check_password(password):
-                raise forms.ValidationError("Password Does not Match.")
 
-            if not user.is_active:
-                raise forms.ValidationError("User is not Active.")
+class ApprovalProfileUpdateForm(djform.ModelForm):
+    class Meta:
+        model = User
+        fields = ['requested_role']
 
-        return super(LoginForm, self).clean(*args, **kwargs)
 
-    def get_user(self):
-        return self.user
+UserProfileSocialLinksFormSet = inlineformset_factory(
+    CommonUserProfile, SocialLink,
+    fields=('media_name', 'url'),
+    extra=4,
+    max_num=4
+)
+
+class CommonUserProfileForm(djform.ModelForm):
+    class Meta:
+        model = CommonUserProfile
+        fields = [
+            'profile_picture',
+            'cover_picture',
+            'headline',
+            'show_headline_in_bio',
+            'country',
+            'summary'
+        ]

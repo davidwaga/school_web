@@ -1,14 +1,20 @@
+from django.urls import path, include
+from . import views
 
-from django.urls import include, path
-
-from accounts.views import home,FormTest,logout,logIn
 
 app_name = 'accounts'
 
 urlpatterns = [
-    path('', home, name='home'),
-    path('formtest/',FormTest.as_view(), name='formtest'),
-    path('logout', logout, name='logout'),
-    path('login/', logIn, name='login'),
-
+    path('', views.profile_complete, name='profile_complete'),
+    path('auth/', include('django.contrib.auth.urls')),
+    # register path is archived since we're using allauth'
+    # path('register/', views.register, name='register'),
+    path('dashboard/', views.dashboard, name='dashboard'),
+    path('groups/', views.GroupListView.as_view(), name='groups'),
+    path('user-requests/', views.user_requests_list, name='user_requests'),
+    path('permission-error/', views.permission_error, name='permission_error'),
+    path('approval/<int:pk>/<int:approved>',views.user_approval, name='user_approval'),
+    path('modify-and-approve/<int:pk>/',views.user_approval_with_modification,name='approval_with_modification'),
+    path('user/<int:pk>/change', views.UserUpdateView.as_view(), name='user_change'),
+    path('api/upload-profile-picture', views.profile_picture_upload,name='profile_picture_upload'),
 ]

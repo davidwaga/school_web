@@ -1,0 +1,55 @@
+{% extends "admin/change_list.html" %} {% load humanize %} {% block content_title %}
+<h1> Noise Filter 200 </h1>{% endblock %}{% block extrahead %} {{ block.super }} {% endblock %}{% block result_list %}
+<style>
+    .results table {
+        counter-reset: rowNumber;
+    }
+    
+    .results tbody tr {
+        counter-increment: rowNumber;
+    }
+    
+    .results tbody td.rank::before {
+        content: counter(rowNumber);
+        ;
+    }
+</style>
+
+<div style="margin: 10px 0; ">
+</div>
+
+<div class="results ">
+    <table>
+        <thead>
+            <tr>
+                <th>
+                    <div class="text ">
+                        Rank
+                    </div>
+                </th>
+                <th>
+                    <div class="text ">
+                        <a href="# ">Name</a>
+                    </div>
+                </th>
+                <th>
+                    <div class="text ">
+                        <a href="# ">Is Verified</a>
+                    </div>
+                </th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in books_list %}
+            <tr class="{% cycle 'row1' 'row2' %} ">
+                <td class="rank "> </td>
+                <td> {{ row.name }} </td>
+                <td><input type="checkbox" id="checkbox" {% if row.is_verified is True %} checked="checked" {% endif %} value="{{row.is_verified}}" onclick="this.changelist-form.submit()" /></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+
+    </table>
+</div>
+<input type="hidden" name="_save" id="_save" class="default"> {% endblock %} {% block pagination %} {% endblock %}

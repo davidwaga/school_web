@@ -1,38 +1,37 @@
-{% extends 'base.html' %} {% load crispy_forms_tags %} {% block content %} {% if form.non_field_errors %}
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    {% for error in form.non_field_errors %}
-    <p{% if forloop.last %} class="mb-0" {% endif %}>{{ error }}</p>
-        {% endfor %}
-        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-        <span aria-hidden="true">&times;</span>
-      </button>
-</div>
-{% endif %}
-<div class="wrapper fadeInDown">
-    <div id="formContent">
+{% extends 'layout.html' %}
+{% load crispy_forms_tags %}
 
-        <!-- Login Form -->
-        <form method="post" novalidate>
-            {% csrf_token %}
-            <div>
-                <div class="form-group">
-                    {{ form.username|as_crispy_field }}
+{% block content %}
+<section id="login-form-section">
+    <div id="login-form-section--inner">
+        <div class="container">
+            <div class="row justify-content-center py-5">
+                <div class="col-6">
+                    <h1 class="text-center">Login</h1>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="id_username">Username</label>
+                            <input type="text" name="username" class="form-control" id="id_username"
+                                placeholder="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_password">Password</label>
+                            <input type="password" name="password" class="form-control" id="id_password"
+                                placeholder="password">
+                        </div>
+                        <!-- <input type="hidden" name="next" value="{{ next }}"> -->
+                        <button type="submit" class="btn btn-outline-info float-right">Login</button>
+                    </form>
+                    <a class="d-block" href="{% url 'account_signup'  %}">
+                        Don't have an account? <b>Register Now.</b>
+                    </a>
+                    <a class="d-block" href="/password-reset/">
+                        Forgot password?
+                    </a>
                 </div>
             </div>
-            <div>
-                <div class="form-group">
-                    {{ form.password|as_crispy_field }}
-                </div>
-            </div>
-            <input type="submit" class="fadeIn fourth" value="Log In">
-        </form>
-
-
-        <!-- Remind Passowrd -->
-        <div id="formFooter">
-            <a class="underlineHover" href="#">Forgot Password?</a>
         </div>
-
     </div>
-</div>
+</section>
 {% endblock %}

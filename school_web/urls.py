@@ -1,39 +1,74 @@
-"""school_web URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/3.1/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
 from django.contrib import admin
 from django.urls import path, include
-from . import settings
+from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib.auth import views as auth_views
 
-from django.contrib.staticfiles.urls import static, staticfiles_urlpatterns
+from institute.models import InstituteProfile
+from accounts.views import dashboard
 
-from classroom.views import students, teachers
-from accounts.views import SignUpView,logout,logIn
+try:
+    institute = InstituteProfile.objects.get(active=True)
+    admin.site.site_header = institute.site_header
+    admin.site.site_title = institute.site_title
+    admin.site.index_title = institute.index_title
+except:
+    admin.site.site_header = 'Django Administration'
+    admin.site.site_title = 'Django Site Admin'
+    admin.site.index_title = 'Django Administration'
+
+DJANGO_ADMIN_URL = settings.DJANGO_ADMIN_URL + '/'
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('accounts.urls')),
-    path('classroom/', include('classroom.urls')),
-    path('login/', logIn, name="login"),
-    #path('accounts/', include('django.contrib.auth.urls')),
-    path('accounts/signup/', SignUpView.as_view(), name='signup'),
-    path('accounts/signup/student/', students.StudentSignUpView.as_view(), name='student_signup'),
-    path('accounts/signup/teacher/', teachers.TeacherSignUpView.as_view(), name='teacher_signup'),
-    path('logout', logout, name='logout')
-
+    path('admin/', include('admin_honeypot.urls', namespace='admin_honeypot')),
+    path(DJANGO_ADMIN_URL, admin.site.urls),
+    path('', include('pages.urls')),
+    path('dashboard/', dashboard, name='index_view'),
+    path('accounts/', include('allauth.urls')),
+    path('blog/', include('articles.urls')),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
+    path('account/', include('accounts.urls')),
+    path('academics/', include('academics.urls')),
+    path('students/', include('students.urls')),
+    path('teachers/', include('teachers.urls')),
+    path('result/', include('result.urls')),
+    path('institute/', include('institute.urls')),
+    path('password-reset/',
+        auth_views.PasswordResetView.as_view(
+            template_name='account/password/password_reset.html'
+        ),
+        name="password_reset",
+    ),
+    path('password_reset/done/',
+        auth_views.PasswordResetDoneView.as_view(
+            template_name='account/password/password_reset_done.html'
+        ),
+        name="password_reset_done",
+    ),
+    path('password-reset-confirm/<uidb64>/<token>/',
+        auth_views.PasswordResetConfirmView.as_view(
+            template_name='account/password/password_reset_confirm.html'
+        ),
+        name='password_reset_confirm',
+    ),
+    path('password-reset-complete/',
+        auth_views.PasswordResetCompleteView.as_view(
+            template_name='account/password/password-reset-complete.html'
+        ),
+        name='password_reset_complete'
+    ),
 ]
 
-urlpatterns += staticfiles_urlpatterns()
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL,
+                            document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL,
+                            document_root=settings.STATIC_ROOT)
+
+if "debug_toolbar" in settings.INSTALLED_APPS:
+        import debug_toolbar
+
+        urlpatterns = [
+            path("__debug__/", include(debug_toolbar.urls))
+        ] + urlpatterns
